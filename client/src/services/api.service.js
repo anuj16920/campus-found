@@ -1,7 +1,11 @@
 import axios from 'axios'
 import { authService } from './auth.service'
 
-const BASE_URL = import.meta.env.VITE_API_URL || '/api'
+// 🔥 FIXED: remove fallback, force correct API URL
+const BASE_URL = import.meta.env.VITE_API_URL
+
+// 🔥 Optional debug (you can remove later)
+console.log("API URL:", BASE_URL)
 
 export const api = axios.create({
   baseURL: BASE_URL,
@@ -10,7 +14,7 @@ export const api = axios.create({
   },
 })
 
-// Request interceptor to add auth token
+// 🔐 Request interceptor to add Firebase token
 api.interceptors.request.use(
   async (config) => {
     try {
@@ -26,12 +30,11 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// Response interceptor for error handling
+// ⚠️ Response interceptor for handling errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized - could trigger logout
       window.dispatchEvent(new CustomEvent('auth:unauthorized'))
     }
     return Promise.reject(error)
