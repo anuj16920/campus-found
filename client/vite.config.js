@@ -5,11 +5,14 @@ import path from 'path'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
   },
+
+  // 🔥 DEV SERVER (local only)
   server: {
     port: 5173,
     proxy: {
@@ -19,6 +22,14 @@ export default defineConfig({
       },
     },
   },
+
+  // 🔥 PREVIEW SERVER (production - Coolify)
+  preview: {
+    host: true,
+    port: 3000,
+    allowedHosts: true, // ✅ allow all hosts (fixes your error)
+  },
+
   build: {
     sourcemap: true,
     rollupOptions: {
