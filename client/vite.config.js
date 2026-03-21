@@ -12,7 +12,7 @@ export default defineConfig({
     },
   },
 
-  // 🔥 DEV SERVER (local only)
+  // DEV SERVER (local only)
   server: {
     port: 5173,
     proxy: {
@@ -23,20 +23,19 @@ export default defineConfig({
     },
   },
 
-  // 🔥 PREVIEW SERVER (production - Coolify)
+  // PREVIEW SERVER (production - Coolify)
   preview: {
     host: true,
     port: 3000,
-    allowedHosts: true, // ✅ allow all hosts (fixes your error)
+    allowedHosts: true,
   },
 
   build: {
-    sourcemap: true,
+    sourcemap: false,
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
-          firebase: ['firebase/app', 'firebase/auth'],
         },
       },
     },
