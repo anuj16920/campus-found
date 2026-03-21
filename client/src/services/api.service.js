@@ -16,10 +16,10 @@ export const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     // Get session from Supabase
-    const session = supabase.auth.session();
+    const { data: sessionData } = await supabase.auth.getSession();
     
-    if (session?.access_token) {
-      config.headers.Authorization = `Bearer ${session.access_token}`;
+    if (sessionData?.session?.access_token) {
+      config.headers.Authorization = `Bearer ${sessionData.session.access_token}`;
     }
     
     return config;

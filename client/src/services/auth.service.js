@@ -17,11 +17,11 @@ export const authService = {
     if (error) throw error;
     
     // Get session token
-    const session = supabase.auth.session();
-    if (session) {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData?.session) {
       // Verify with backend
       const response = await api.post('/auth/verify', { 
-        token: session.access_token 
+        token: sessionData.session.access_token 
       });
       return response.data.user;
     }
@@ -39,11 +39,11 @@ export const authService = {
     if (error) throw error;
     
     // Get session token
-    const session = supabase.auth.session();
-    if (session) {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData?.session) {
       // Verify with backend
       const response = await api.post('/auth/verify', { 
-        token: session.access_token 
+        token: sessionData.session.access_token 
       });
       return response.data.user;
     }
@@ -74,26 +74,30 @@ export const authService = {
   },
 
   // Get current session
-  getSession: () => {
-    return supabase.auth.session();
+  getSession: async () => {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    return data?.session || null;
   },
 
   // Get current user
-  getCurrentUser: () => {
-    return supabase.auth.user();
+  getCurrentUser: async () => {
+    const { data, error } = await supabase.auth.getUser();
+    if (error) throw error;
+    return data?.user || null;
   },
 
   // Verify auth with backend
   verifyAuth: async () => {
-    const session = supabase.auth.session();
+    const { data: sessionData } = await supabase.auth.getSession();
     
-    if (!session) {
+    if (!sessionData?.session) {
       return null;
     }
 
     try {
       const response = await api.post('/auth/verify', { 
-        token: session.access_token 
+        token: sessionData.session.access_token 
       });
       return response.data.user;
     } catch (error) {
@@ -104,7 +108,7 @@ export const authService = {
 
   // Listen to auth state changes
   onAuthChange: (callback) => {
-    return supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
         // Verify with backend
         try {
@@ -122,13 +126,15 @@ export const authService = {
         callback(event, session?.user || null);
       }
     });
+    
+    return () => subscription.unsubscribe();
   },
 
   // Get access token
   getAccessToken: async () => {
-    const session = supabase.auth.session();
-    if (session) {
-      return session.access_token;
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData?.session) {
+      return sessionData.session.access_token;
     }
     return null;
   }

@@ -13,7 +13,7 @@ export const useAuthStore = create((set, get) => ({
       set({ isLoading: true, error: null });
       
       // Check for existing session
-      const session = authService.getSession();
+      const session = await authService.getSession();
       
       if (session) {
         // Verify session with backend
