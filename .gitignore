@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment files (contain secrets)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Firebase service account (contains secrets)
+**/firebase-adminsdk*.json
+!firebase-adminsdk*-example.json
+
+# Build outputs
+dist/
+build/
+.next/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Cache
+.cache/
+.parcel-cache/
+
+# Testing
+coverage/
+
+# Misc
+*.tgz
+*.tar.gz
