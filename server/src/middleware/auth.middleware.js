@@ -85,4 +85,35 @@ export const getOrCreateUser = async (supabaseUser) => {
   }
 };
 
-export default { authenticate, getOrCreateUser };
+/**
+ * Optional auth - tries to verify token but doesn't fail if missing
+ */
+export const optionalAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      req.user = null;
+      return next();
+    }
+    
+    const token = authHeader.split(' ')[1];
+    const decoded = await verifyToken(token);
+    
+    if (decoded) {
+      const user = await getOrCreateUser(decoded);
+      req.user = user;
+      req.supabaseUser = decoded;
+    } else {
+      req.user = null;
+    }
+    
+    next();
+  } catch (error) {
+    // Auth failed, but continue without user
+    req.user = null;
+    next();
+  }
+};
+
+export default { authenticate, getOrCreateUser, optionalAuth };
