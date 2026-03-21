@@ -1,44 +1,45 @@
-import axios from 'axios'
-import { authService } from './auth.service'
+import axios from 'axios';
+import { supabase } from '../config/supabase';
 
-// 🔥 FIXED: remove fallback, force correct API URL
-const BASE_URL = import.meta.env.VITE_API_URL
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// 🔥 Optional debug (you can remove later)
-console.log("API URL:", BASE_URL)
-
+// Create axios instance
 export const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-})
+  timeout: 30000,
+});
 
-// 🔐 Request interceptor to add Firebase token
+// Request interceptor to add auth token
 api.interceptors.request.use(
   async (config) => {
-    try {
-      const token = await authService.getIdToken()
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`
-      }
-    } catch (error) {
-      // Ignore token errors
+    // Get session from Supabase
+    const session = supabase.auth.session();
+    
+    if (session?.access_token) {
+      config.headers.Authorization = `Bearer ${session.access_token}`;
     }
-    return config
+    
+    return config;
   },
-  (error) => Promise.reject(error)
-)
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
-// ⚠️ Response interceptor for handling errors
+// Response interceptor for error handling
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response?.status === 401) {
-      window.dispatchEvent(new CustomEvent('auth:unauthorized'))
+      // Token expired or invalid - sign out
+      await supabase.auth.signOut();
+      window.location.href = '/auth';
     }
-    return Promise.reject(error)
+    return Promise.reject(error);
   }
-)
+);
 
-export default api
+export default api;

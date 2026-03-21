@@ -1,98 +1,142 @@
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-import { authService } from '../services/auth.service'
+import { create } from 'zustand';
+import { authService } from '../services/auth.service';
 
-export const useAuthStore = create(
-  persist(
-    (set, get) => ({
-      user: null,
-      isLoading: true,
-      error: null,
+export const useAuthStore = create((set, get) => ({
+  user: null,
+  isAuthenticated: false,
+  isLoading: true,
+  error: null,
 
-      setUser: (user) => set({ user, isLoading: false, error: null }),
+  // Initialize auth state
+  initialize: async () => {
+    try {
+      set({ isLoading: true, error: null });
       
-      setLoading: (isLoading) => set({ isLoading }),
+      // Check for existing session
+      const session = authService.getSession();
       
-      setError: (error) => set({ error, isLoading: false }),
-
-      login: async (email, password) => {
-        set({ isLoading: true, error: null })
-        try {
-          const user = await authService.loginWithEmail(email, password)
-          set({ user, isLoading: false })
-          return user
-        } catch (error) {
-          set({ error: error.message, isLoading: false })
-          throw error
+      if (session) {
+        // Verify session with backend
+        const user = await authService.verifyAuth();
+        if (user) {
+          set({ 
+            user, 
+            isAuthenticated: true, 
+            isLoading: false 
+          });
+        } else {
+          // Session exists but backend verification failed
+          set({ 
+            user: null, 
+            isAuthenticated: false, 
+            isLoading: false 
+          });
         }
-      },
-
-      loginWithGoogle: async () => {
-        set({ isLoading: true, error: null })
-        try {
-          const user = await authService.loginWithGoogle()
-          set({ user, isLoading: false })
-          return user
-        } catch (error) {
-          set({ error: error.message, isLoading: false })
-          throw error
-        }
-      },
-
-      register: async (email, password, name) => {
-        set({ isLoading: true, error: null })
-        try {
-          const user = await authService.registerWithEmail(email, password, name)
-          set({ user, isLoading: false })
-          return user
-        } catch (error) {
-          set({ error: error.message, isLoading: false })
-          throw error
-        }
-      },
-
-      logout: async () => {
-        set({ isLoading: true })
-        try {
-          await authService.logout()
-          set({ user: null, isLoading: false })
-        } catch (error) {
-          set({ error: error.message, isLoading: false })
-          throw error
-        }
-      },
-
-      verifyAuth: async () => {
-        set({ isLoading: true })
-        try {
-          const user = await authService.verifyAuth()
-          set({ user, isLoading: false })
-          return user
-        } catch (error) {
-          set({ user: null, isLoading: false })
-          return null
-        }
-      },
-
-      updateProfile: async (updates) => {
-        const currentUser = get().user
-        if (!currentUser) throw new Error('Not authenticated')
-        
-        try {
-          const updatedUser = await authService.updateProfile(updates)
-          set({ user: { ...currentUser, ...updatedUser } })
-          return updatedUser
-        } catch (error) {
-          set({ error: error.message })
-          throw error
-        }
-      },
-
-      clearError: () => set({ error: null }),
-    }),
-    {
-      name: 'campusfind-auth',
-      partialize: (state) => ({ user: state.user }),
+      } else {
+        set({ 
+          user: null, 
+          isAuthenticated: false, 
+          isLoading: false 
+        });
+      }
+    } catch (error) {
+      console.error('Auth initialization error:', error);
+      set({ 
+        user: null, 
+        isAuthenticated: false, 
+        isLoading: false,
+        error: error.message 
+      });
     }
-  )
-)
+  },
+
+  // Sign up
+  register: async (email, password, name) => {
+    try {
+      set({ isLoading: true, error: null });
+      const user = await authService.registerWithEmail(email, password, name);
+      set({ 
+        user, 
+        isAuthenticated: true, 
+        isLoading: false 
+      });
+      return user;
+    } catch (error) {
+      console.error('Registration error:', error);
+      set({ 
+        user: null, 
+        isAuthenticated: false, 
+        isLoading: false,
+        error: error.message || 'Registration failed' 
+      });
+      throw error;
+    }
+  },
+
+  // Login with email
+  login: async (email, password) => {
+    try {
+      set({ isLoading: true, error: null });
+      const user = await authService.loginWithEmail(email, password);
+      set({ 
+        user, 
+        isAuthenticated: true, 
+        isLoading: false 
+      });
+      return user;
+    } catch (error) {
+      console.error('Login error:', error);
+      set({ 
+        user: null, 
+        isAuthenticated: false, 
+        isLoading: false,
+        error: error.message || 'Login failed' 
+      });
+      throw error;
+    }
+  },
+
+  // Login with Google
+  loginWithGoogle: async () => {
+    try {
+      set({ isLoading: true, error: null });
+      const result = await authService.loginWithGoogle();
+      // OAuth will redirect, so we just set loading false
+      // The callback will handle the actual user update
+      set({ isLoading: false });
+      return result;
+    } catch (error) {
+      console.error('Google login error:', error);
+      set({ 
+        isLoading: false,
+        error: error.message || 'Google login failed' 
+      });
+      throw error;
+    }
+  },
+
+  // Logout
+  logout: async () => {
+    try {
+      set({ isLoading: true, error: null });
+      await authService.logout();
+      set({ 
+        user: null, 
+        isAuthenticated: false, 
+        isLoading: false 
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      set({ 
+        isLoading: false,
+        error: error.message || 'Logout failed' 
+      });
+      throw error;
+    }
+  },
+
+  // Clear error
+  clearError: () => set({ error: null }),
+}));
+
+export default useAuthStore;

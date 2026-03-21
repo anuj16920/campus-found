@@ -1,78 +1,88 @@
-import { verifyFirebaseToken, getAuth } from '../config/firebase.js';
-import { getUserByFirebaseUid, createUser } from '../config/supabase.js';
+import { verifyToken } from '../config/supabase.js';
 
-export async function authMiddleware(req, res, next) {
+/**
+ * Verify Supabase JWT token and attach user to request
+ */
+export const authenticate = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ 
-        error: 'Unauthorized', 
-        message: 'No token provided' 
-      });
+      return res.status(401).json({ error: 'No token provided' });
     }
-
-    const token = authHeader.split('Bearer ')[1];
     
-    let decodedToken;
-    try {
-      decodedToken = await verifyFirebaseToken(token);
-    } catch (firebaseError) {
-      return res.status(401).json({ 
-        error: 'Unauthorized', 
-        message: 'Invalid token' 
-      });
+    const token = authHeader.split(' ')[1];
+    const decoded = await verifyToken(token);
+    
+    if (!decoded) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
     }
-
-    // Get or create user in Supabase
-    let user = await getUserByFirebaseUid(decodedToken.uid);
+    
+    // Get or create user in database
+    const user = await getOrCreateUser(decoded);
     
     if (!user) {
-      // Create new user
-      user = await createUser({
-        firebase_uid: decodedToken.uid,
-        email: decodedToken.email || `${decodedToken.uid}@firebase.local`,
-        name: decodedToken.name || decodedToken.email?.split('@')[0] || 'User',
-        avatar_url: decodedToken.picture || null
-      });
+      return res.status(401).json({ error: 'User not found' });
     }
-
+    
     req.user = user;
-    req.firebaseUid = decodedToken.uid;
+    req.supabaseUser = decoded;
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
-    return res.status(401).json({ 
-      error: 'Unauthorized', 
-      message: 'Authentication failed' 
-    });
+    return res.status(401).json({ error: 'Authentication failed' });
   }
-}
+};
 
-// Optional auth - doesn't fail if no token, just sets req.user to null
-export async function optionalAuth(req, res, next) {
+/**
+ * Get or create user in the users table
+ */
+export const getOrCreateUser = async (supabaseUser) => {
+  const { supabaseAdmin } = await import('../config/supabase.js');
+  
   try {
-    const authHeader = req.headers.authorization;
+    // Try to find existing user by supabase_user_id
+    const { data: existingUser, error: findError } = await supabaseAdmin
+      .from('users')
+      .select('*')
+      .eq('supabase_user_id', supabaseUser.sub)
+      .single();
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      req.user = null;
-      return next();
-    }
-
-    const token = authHeader.split('Bearer ')[1];
-    
-    try {
-      const decodedToken = await verifyFirebaseToken(token);
-      const user = await getUserByFirebaseUid(decodedToken.uid);
-      req.user = user;
-      req.firebaseUid = decodedToken.uid;
-    } catch (e) {
-      req.user = null;
+    if (existingUser) {
+      return existingUser;
     }
     
-    next();
+    // User doesn't exist, check if we should create them
+    // Only create if we have required user metadata
+    if (!supabaseUser.email) {
+      console.error('No email in token to create user');
+      return null;
+    }
+    
+    // Create new user record
+    const { data: newUser, error: createError } = await supabaseAdmin
+      .from('users')
+      .insert({
+        supabase_user_id: supabaseUser.sub,
+        email: supabaseUser.email,
+        name: supabaseUser.user_metadata?.full_name || 
+              supabaseUser.user_metadata?.name || 
+              supabaseUser.email.split('@')[0],
+        avatar_url: supabaseUser.user_metadata?.avatar_url || null
+      })
+      .select()
+      .single();
+    
+    if (createError) {
+      console.error('Error creating user:', createError);
+      return null;
+    }
+    
+    return newUser;
   } catch (error) {
-    req.user = null;
-    next();
+    console.error('getOrCreateUser error:', error);
+    return null;
   }
-}
+};
+
+export default { authenticate, getOrCreateUser };

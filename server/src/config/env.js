@@ -13,15 +13,6 @@ export const config = {
   SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || '',
   SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY || '',
 
-  // Firebase Admin
-  FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID || '',
-  FIREBASE_PRIVATE_KEY: (() => {
-    const key = process.env.FIREBASE_PRIVATE_KEY || '';
-    // Handle both \\n escape sequences and actual newlines
-    return key.replace(/\\n/g, '\n').replace(/\n/g, '\n');
-  })(),
-  FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL || '',
-
   // Upload
   MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
   ALLOWED_FILE_TYPES: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],

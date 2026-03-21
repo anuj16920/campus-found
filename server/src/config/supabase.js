@@ -1,88 +1,37 @@
 import { createClient } from '@supabase/supabase-js';
-import { config } from './env.js';
+import 'dotenv/config';
 
-// Create Supabase clients
-export const supabase = createClient(
-  config.SUPABASE_URL,
-  config.SUPABASE_ANON_KEY
-);
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
-export const supabaseAdmin = createClient(
-  config.SUPABASE_URL,
-  config.SUPABASE_SERVICE_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
+// Create Supabase client for server-side operations
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
   }
-);
+});
 
-export async function initializeDatabase() {
+/**
+ * Verify a Supabase JWT token
+ * @param {string} token - The JWT token to verify
+ * @returns {object|null} - The decoded token payload or null if invalid
+ */
+export const verifyToken = async (token) => {
   try {
-    console.log('🔄 Checking Supabase connection...');
+    // Use Supabase Admin client to verify the token
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
     
-    // Test connection - just try to query users table
-    const { error } = await supabase
-      .from('users')
-      .select('id')
-      .limit(1);
-    
-    if (error) {
-      if (error.code === 'PGRST204' || error.code === '42P01') {
-        console.log('⚠️  Database tables not found.');
-        console.log('📝 Please run the migration SQL in Supabase SQL Editor:');
-        console.log('   File: server/supabase-migration.sql');
-        console.log('');
-        console.log('   Or go to: https://supabase.com/dashboard/project/YOUR_PROJECT/sql');
-        console.log('');
-        console.log('⚠️  Server will continue but database features will not work.');
-        return; // Don't throw, just warn
-      }
-      console.log('⚠️  Supabase connection warning:', error.message);
-    } else {
-      console.log('✅ Supabase connection verified');
+    if (error || !user) {
+      console.error('Token verification error:', error);
+      return null;
     }
+    
+    return user;
   } catch (error) {
-    console.warn('⚠️  Database initialization warning:', error.message);
-    // Don't throw - allow server to start even if DB isn't ready
-  }
-}
-
-export async function getUserByFirebaseUid(firebaseUid) {
-  try {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('firebase_uid', firebaseUid)
-      .single();
-    
-    if (error) return null;
-    return data;
-  } catch {
+    console.error('Token verification failed:', error);
     return null;
   }
-}
+};
 
-export async function createUser(userData) {
-  const { data, error } = await supabase
-    .from('users')
-    .insert(userData)
-    .select()
-    .single();
-  
-  if (error) throw error;
-  return data;
-}
-
-export async function updateUser(userId, updates) {
-  const { data, error } = await supabase
-    .from('users')
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq('id', userId)
-    .select()
-    .single();
-  
-  if (error) throw error;
-  return data;
-}
+export default supabaseAdmin;

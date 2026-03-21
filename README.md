@@ -1,323 +1,207 @@
 # CampusFind - Lost & Found Platform
 
-A high-performance Lost & Found web platform built for campus communities. Users can post, browse, search, claim, and interact with lost and found items in an Instagram-like feed.
+A production-ready Lost & Found web application for college campuses. Built with React, Node.js, and Supabase.
 
-![CampusFind](https://via.placeholder.com/1200x400/0f172a/0ea5e9?text=CampusFind)
+## Features
 
-## 🚀 Features
+- 🔐 **Authentication**: Email/Password and Google OAuth via Supabase Auth
+- 📱 **Instagram-like Feed**: Scroll through found/lost items with infinite scroll
+- 📤 **Post Creation**: Upload images with item details
+- 🔍 **Search & Filters**: Find items by category, location, or keywords
+- ❤️ **Interactions**: Like and save posts
+- 📩 **Claim System**: Request ownership of found items
+- 👤 **User Profiles**: View your posts and saved items
 
-### Core Features
-- 🔐 **Firebase Authentication** - Email/password and Google OAuth
-- 📸 **Image Upload** - Supabase Storage for item photos
-- 🏠 **Instagram-like Feed** - Infinite scroll, real-time updates
-- 🔍 **Search & Filters** - Category, location, type, and keyword search
-- ❤️ **Interactions** - Like, save/bookmark posts
-- 📩 **Claim System** - Request ownership with messaging
-- 👤 **User Profiles** - View posts, saved items, claims
+## Tech Stack
 
-### Tech Stack
-- **Frontend**: React 18 + Vite + Tailwind CSS + Framer Motion
+- **Frontend**: React 18 + Vite + Tailwind CSS + Zustand
 - **Backend**: Node.js + Express
 - **Database**: Supabase (PostgreSQL)
 - **Storage**: Supabase Storage
-- **Auth**: Firebase Authentication
-- **State**: Zustand + React Query
+- **Authentication**: Supabase Auth
 
-## 📁 Project Structure
+## Project Structure
 
 ```
-campusfound/
-├── client/                    # React frontend
-│   ├── public/
-│   │   └── favicon.svg
+campus-found/
+├── client/                 # React frontend
 │   ├── src/
-│   │   ├── components/       # Reusable UI components
-│   │   │   ├── EmptyState.jsx
-│   │   │   ├── Feed.jsx
-│   │   │   ├── FilterBar.jsx
-│   │   │   ├── Layout.jsx
-│   │   │   ├── Navbar.jsx
-│   │   │   └── PostCard.jsx
-│   │   ├── config/           # Configuration
-│   │   │   └── firebase.js
-│   │   ├── pages/            # Page components
-│   │   │   ├── AuthPage.jsx
-│   │   │   ├── CreatePostPage.jsx
-│   │   │   ├── HomePage.jsx
-│   │   │   ├── MyClaimsPage.jsx
-│   │   │   ├── PostClaimsPage.jsx
-│   │   │   ├── PostDetailPage.jsx
-│   │   │   ├── ProfilePage.jsx
-│   │   │   └── SavedPostsPage.jsx
-│   │   ├── services/         # API services
-│   │   │   ├── api.service.js
-│   │   │   ├── auth.service.js
-│   │   │   └── post.service.js
-│   │   ├── stores/           # Zustand stores
-│   │   │   ├── auth.store.js
-│   │   │   └── post.store.js
-│   │   ├── App.jsx
-│   │   ├── index.css
-│   │   └── main.jsx
-│   ├── .env.example
-│   ├── index.html
-│   ├── package.json
-│   ├── tailwind.config.js
-│   ├── vite.config.js
-│   └── postcss.config.js
-│
-├── server/                    # Express backend
+│   │   ├── config/        # Supabase & API config
+│   │   ├── components/    # Reusable UI components
+│   │   ├── pages/         # Page components
+│   │   ├── services/      # API & auth services
+│   │   ├── stores/        # Zustand state stores
+│   │   ├── hooks/         # Custom React hooks
+│   │   └── utils/         # Utility functions
+│   └── ...
+├── server/                 # Express backend
 │   ├── src/
-│   │   ├── config/           # Configuration
-│   │   │   ├── env.js
-│   │   │   ├── firebase.js
-│   │   │   └── supabase.js
-│   │   ├── middleware/       # Express middleware
-│   │   │   ├── auth.middleware.js
-│   │   │   └── validation.middleware.js
-│   │   ├── routes/           # API routes
-│   │   │   ├── auth.routes.js
-│   │   │   ├── claim.routes.js
-│   │   │   ├── like.routes.js
-│   │   │   ├── post.routes.js
-│   │   │   ├── upload.routes.js
-│   │   │   └── user.routes.js
-│   │   └── index.js          # Server entry point
-│   ├── .env.example
-│   └── package.json
-│
-└── README.md
+│   │   ├── config/        # Server configuration
+│   │   ├── controllers/   # Route controllers
+│   │   ├── middleware/    # Express middleware
+│   │   ├── routes/        # API routes
+│   │   └── services/      # Business logic
+│   └── ...
+└── supabase/              # Database schema
 ```
 
-## 🛠️ Setup Instructions
+## Setup Instructions
 
-### Prerequisites
-- Node.js 18+
-- npm or yarn
-- Firebase account
-- Supabase account
+### 1. Supabase Setup
 
-### 1. Clone and Install
+1. Create a new project at [supabase.com](https://supabase.com)
+2. Go to **Settings > API** and copy:
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_KEY` (for server)
+   - `SUPABASE_ANON_KEY` (for client)
+
+3. Run the database schema:
+   - Go to **SQL Editor** in Supabase Dashboard
+   - Copy the contents of `supabase/schema.sql`
+   - Execute the SQL
+
+4. Enable Auth Providers (optional - for Google OAuth):
+   - Go to **Authentication > Providers**
+   - Enable Google and configure with your OAuth credentials
+
+5. Create Storage Bucket:
+   - Go to **Storage** in Supabase Dashboard
+   - Create a new bucket called `post-images`
+   - Set as public bucket
+
+### 2. Backend Setup
 
 ```bash
-# Install backend dependencies
 cd server
-npm install
-
-# Install frontend dependencies
-cd ../client
 npm install
 ```
 
-### 2. Firebase Setup
+Create `.env` file:
 
-1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Create a new project
-3. Enable Authentication with Email/Password and Google providers
-4. Get your web app config:
-   - Project Settings → General → Your apps → SDK setup
-   - Copy the config values
-
-### 3. Supabase Setup
-
-1. Go to [Supabase](https://supabase.com/) and create a project
-2. Get your project credentials:
-   - Settings → API → `SUPABASE_URL` and `SUPABASE_ANON_KEY`
-   - Create a storage bucket named `campusfind-images`
-3. Enable Row Level Security on your tables
-
-### 4. Environment Variables
-
-**Server (`.env`):**
 ```env
-PORT=3001
+PORT=5000
 NODE_ENV=development
-CLIENT_URL=http://localhost:5173
 SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_KEY=your-service-key
-FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk@...
+CLIENT_URL=http://localhost:5173
 ```
 
-**Client (`.env`):**
-```env
-VITE_API_URL=http://localhost:3001/api
-VITE_FIREBASE_API_KEY=your-api-key
-VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your-project-id
-VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
-VITE_FIREBASE_APP_ID=1:123456789:web:abcdef
-```
-
-### 5. Run Development Servers
+Run development server:
 
 ```bash
-# Terminal 1 - Backend
-cd server
-npm run dev
-
-# Terminal 2 - Frontend
-cd client
 npm run dev
 ```
 
-## 🌐 API Endpoints
+### 3. Frontend Setup
+
+```bash
+cd client
+npm install
+```
+
+Create `.env` file:
+
+```env
+VITE_API_URL=http://localhost:5000/api
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+
+Run development server:
+
+```bash
+npm run dev
+```
+
+## Environment Variables
+
+### Server (.env)
+
+| Variable | Description |
+|----------|-------------|
+| `PORT` | Server port (default: 5000) |
+| `NODE_ENV` | Environment (development/production) |
+| `SUPABASE_URL` | Your Supabase project URL |
+| `SUPABASE_SERVICE_KEY` | Supabase service role key |
+| `CLIENT_URL` | Frontend URL for CORS |
+
+### Client (.env)
+
+| Variable | Description |
+|----------|-------------|
+| `VITE_API_URL` | Backend API URL |
+| `VITE_SUPABASE_URL` | Your Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon/public key |
+
+## API Endpoints
 
 ### Authentication
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/verify` | Verify Firebase token |
-| GET | `/api/auth/me` | Get current user |
-| POST | `/api/auth/refresh` | Refresh user data |
+- `POST /api/auth/verify` - Verify Supabase token
 
 ### Posts
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/posts` | Get posts (paginated, filterable) |
-| GET | `/api/posts/:id` | Get single post |
-| POST | `/api/posts` | Create post |
-| PUT | `/api/posts/:id` | Update post |
-| DELETE | `/api/posts/:id` | Delete post |
-
-### Interactions
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/posts/:id/like` | Like post |
-| DELETE | `/api/posts/:id/like` | Unlike post |
-| POST | `/api/posts/:id/save` | Save post |
-| DELETE | `/api/posts/:id/save` | Unsave post |
-
-### Claims
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/posts/:id/claim` | Create claim |
-| GET | `/api/claims/user` | Get user's claims |
-| GET | `/api/claims/post/:id` | Get post claims |
-| PUT | `/api/claims/:id` | Update claim status |
+- `GET /api/posts` - Get all posts (paginated)
+- `GET /api/posts/:id` - Get single post
+- `POST /api/posts` - Create post (protected)
+- `DELETE /api/posts/:id` - Delete post (protected)
+- `POST /api/posts/:id/like` - Like/unlike post (protected)
+- `POST /api/posts/:id/save` - Save/unsave post (protected)
 
 ### Users
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/users/:id` | Get user profile |
-| GET | `/api/users/:id/posts` | Get user's posts |
-| GET | `/api/users/me/saved` | Get saved posts |
-| PUT | `/api/users/me` | Update profile |
+- `GET /api/users/me` - Get current user profile (protected)
+- `PUT /api/users/me` - Update profile (protected)
+- `GET /api/users/:id/posts` - Get user's posts
 
-## 📊 Database Schema
+### Claims
+- `POST /api/posts/:id/claim` - Submit claim (protected)
+- `GET /api/claims/user` - Get user's claims (protected)
+- `GET /api/claims/post/:id` - Get claims for post (protected)
+- `PUT /api/claims/:id` - Update claim status (protected)
 
-```sql
--- Users table
-CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  firebase_uid VARCHAR(128) UNIQUE NOT NULL,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  name VARCHAR(255),
-  avatar_url TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+## Database Schema
 
--- Posts table
-CREATE TABLE posts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  title VARCHAR(255) NOT NULL,
-  description TEXT,
-  image_url TEXT NOT NULL,
-  category VARCHAR(100) NOT NULL,
-  location VARCHAR(255) NOT NULL,
-  date_found TIMESTAMP WITH TIME ZONE,
-  status VARCHAR(20) DEFAULT 'active',
-  type VARCHAR(20) DEFAULT 'found',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+The app uses the following tables:
 
--- Likes table
-CREATE TABLE likes (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(user_id, post_id)
-);
+- **users**: User profiles
+- **posts**: Lost/found item posts
+- **likes**: Post likes
+- **claims**: Ownership claims
+- **saved_posts**: Bookmarked posts
 
--- Claims table
-CREATE TABLE claims (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
-  message TEXT NOT NULL,
-  status VARCHAR(20) DEFAULT 'pending',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+See `supabase/schema.sql` for complete schema with RLS policies.
 
--- Saved posts table
-CREATE TABLE saved_posts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(user_id, post_id)
-);
-```
+## Deployment
 
-## 🚀 Deployment
+### Backend (Coolify/Railway/Render)
+
+1. Push your code to GitHub
+2. Connect repository to your deployment platform
+3. Set environment variables
+4. Deploy
 
 ### Frontend (Vercel)
-```bash
-cd client
-vercel
-```
 
-### Backend (Railway/Render)
-1. Connect your GitHub repo
-2. Set environment variables
-3. Deploy
+1. Push your code to GitHub
+2. Import project in Vercel
+3. Set environment variables
+4. Deploy
 
-### Database (Supabase)
-- Hosted PostgreSQL - no deployment needed
-- Just configure connection string
+## Performance Optimizations
 
-## 🎨 UI/UX Features
+- Lazy loading images with Intersection Observer
+- Pagination with cursor-based navigation
+- Debounced search (300ms delay)
+- Optimized database queries with indexes
+- CDN for static assets (Supabase Storage)
 
-- **Dark mode** design with modern aesthetic
-- **Responsive** - mobile-first approach
-- **Smooth animations** with Framer Motion
-- **Infinite scroll** for feed performance
-- **Debounced search** for optimal UX
-- **Optimistic updates** for likes/saves
+## Security
 
-## 🔒 Security
-
-- Firebase JWT verification on all protected routes
-- Supabase Row Level Security (RLS)
+- Supabase Auth with JWT tokens
+- Row Level Security (RLS) policies
 - Input validation with Zod
-- Rate limiting on API endpoints
-- Helmet.js for HTTP headers
+- Rate limiting (1000 requests/15min)
+- Helmet.js security headers
+- CORS protection
 
-## 📈 Performance Optimizations
+## License
 
-- React Query for caching and background updates
-- Infinite scroll pagination
-- Image lazy loading
-- Debounced search (300ms)
-- Optimistic UI updates
-- CDN-ready storage URLs
-
-## 📝 License
-
-MIT License - feel free to use this for your campus!
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
-
----
-
-Built with ❤️ for campus communities
+MIT

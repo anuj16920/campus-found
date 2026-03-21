@@ -1,51 +1,69 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Toaster } from 'react-hot-toast'
-import App from './App'
-import './index.css'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.jsx';
+import './index.css';
+import { supabase } from './config/supabase';
+import useAuthStore from './stores/auth.store';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-})
+// Initialize auth state listener
+const initializeAuthListener = () => {
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    const authStore = useAuthStore.getState();
+    
+    if (event === 'SIGNED_IN' && session) {
+      try {
+        // Verify with backend
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/verify`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ token: session.access_token }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          useAuthStore.setState({ 
+            user: data.user, 
+            isAuthenticated: true,
+            isLoading: false
+          });
+        } else {
+          useAuthStore.setState({ 
+            user: null, 
+            isAuthenticated: false,
+            isLoading: false
+          });
+        }
+      } catch (error) {
+        console.error('Auth verification error:', error);
+        useAuthStore.setState({ 
+          user: null, 
+          isAuthenticated: false,
+          isLoading: false
+        });
+      }
+    } else if (event === 'SIGNED_OUT') {
+      useAuthStore.setState({ 
+        user: null, 
+        isAuthenticated: false,
+        isLoading: false
+      });
+    }
+  });
+};
+
+// Initialize auth on app load
+const initAuth = async () => {
+  const authStore = useAuthStore.getState();
+  await authStore.initialize();
+  initializeAuthListener();
+};
+
+initAuth();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-        <Toaster 
-          position="top-right"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: '#0f172a',
-              color: '#f8fafc',
-              borderRadius: '0.75rem',
-              padding: '1rem',
-            },
-            success: {
-              iconTheme: {
-                primary: '#10b981',
-                secondary: '#f8fafc',
-              },
-            },
-            error: {
-              iconTheme: {
-                primary: '#ef4444',
-                secondary: '#f8fafc',
-              },
-            },
-          }}
-        />
-      </BrowserRouter>
-    </QueryClientProvider>
+    <App />
   </React.StrictMode>,
-)
+);
