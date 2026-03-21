@@ -20,24 +20,32 @@ import { authMiddleware } from './middleware/auth.middleware.js';
 
 const app = express();
 
-// Security middleware
+// 🔥 Security middleware
 app.use(helmet());
+
+// 🔥 FIXED CORS (IMPORTANT)
 app.use(cors({
-  origin: config.CLIENT_URL,
+  origin: [
+    'http://localhost:5173',
+    config.CLIENT_URL
+  ],
   credentials: true
 }));
 
+// 🔥 EXTRA SAFETY (handles preflight requests)
+app.options('*', cors());
+
 // Rate limiting - general API
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: { error: 'Too many requests, please try again later.' }
 });
 
-// Rate limiting - uploads (higher limit for image uploads)
+// Rate limiting - uploads
 const uploadLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 30, // limit each IP to 30 upload requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 30,
   message: { error: 'Too many upload requests, please try again later.' }
 });
 
@@ -95,15 +103,12 @@ app.use((req, res) => {
 // Start server
 async function startServer() {
   try {
-    // Initialize Firebase Admin
     initializeFirebase();
     console.log('✅ Firebase Admin initialized');
 
-    // Initialize Supabase
     await initializeDatabase();
     console.log('✅ Supabase connection established');
 
-    // Start listening
     app.listen(config.PORT, () => {
       console.log(`🚀 Server running on port ${config.PORT}`);
       console.log(`📚 API Documentation: http://localhost:${config.PORT}/api/health`);
