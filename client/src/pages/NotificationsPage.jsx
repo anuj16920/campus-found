@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, Link } from 'react-router-dom';
-import { Bell, Check, Package, X } from 'lucide-react';
+import { Bell, Check, Package, X, MessageCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { api } from '../services/api.service';
 import { useAuthStore } from '../stores/auth.store';
@@ -9,6 +9,7 @@ const iconMap = {
   new_claim: <Package className="w-5 h-5 text-blue-400" />,
   claim_approved: <Check className="w-5 h-5 text-green-400" />,
   claim_rejected: <X className="w-5 h-5 text-red-400" />,
+  new_message: <MessageCircle className="w-5 h-5 text-primary-400" />,
 };
 
 export default function NotificationsPage() {
@@ -72,7 +73,7 @@ export default function NotificationsPage() {
           {notifications.map(n => (
             <Link
               key={n.id}
-              to={n.data?.post_id ? `/post/${n.data.post_id}` : '#'}
+              to={n.data?.conversation_id ? `/chat/${n.data.conversation_id}` : n.data?.post_id ? `/post/${n.data.post_id}` : '#'}
               className={`flex items-start gap-3 p-4 rounded-xl border transition-colors ${
                 !n.read
                   ? 'bg-dark-700 border-primary-500/30'

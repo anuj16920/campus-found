@@ -161,6 +161,12 @@ export default function PostDetailPage() {
     }
   })
 
+  const startChatMutation = useMutation({
+    mutationFn: () => api.post('/conversations/start', { other_user_id: post.user_id, post_id: id }),
+    onSuccess: (res) => navigate(`/chat/${res.data.conversation_id}`),
+    onError: () => toast.error('Failed to start chat'),
+  })
+
   const handleLike = () => {
     if (!user) {
       toast.error('Please sign in first')
@@ -337,13 +343,31 @@ export default function PostDetailPage() {
 
           {/* Claim button - show for everyone except the owner */}
           {!isOwner && (
-            <button
-              onClick={handleClaim}
-              className="btn-primary w-full py-4 text-lg"
-            >
-              <AlertTriangle className="w-5 h-5" />
-              This is Mine!
-            </button>
+            <div className="space-y-3">
+              <button
+                onClick={handleClaim}
+                className="btn-primary w-full py-4 text-lg"
+              >
+                <AlertTriangle className="w-5 h-5" />
+                This is Mine!
+              </button>
+              {post.user_id && (
+                <button
+                  onClick={() => {
+                    if (!user) { toast.error('Please sign in first'); return; }
+                    startChatMutation.mutate();
+                  }}
+                  disabled={startChatMutation.isPending}
+                  className="btn-outline w-full py-3"
+                >
+                  {startChatMutation.isPending
+                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                    : <MessageCircle className="w-4 h-4" />
+                  }
+                  Message Poster
+                </button>
+              )}
+            </div>
           )}
 
           {/* Owner actions */}

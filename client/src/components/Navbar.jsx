@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Plus, Search, User, LogOut, LogIn, Bell } from 'lucide-react';
+import { Home, Plus, Search, User, LogOut, LogIn, Bell, MessageCircle } from 'lucide-react';
 import { useAuthStore } from '../stores/auth.store';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -133,6 +133,10 @@ export default function Navbar() {
                 )}
               </div>
               <span className="text-xs">Alerts</span>
+            </Link>
+            <Link to="/chat" className={`flex flex-col items-center gap-1 ${isActive('/chat') ? 'text-primary-500' : 'text-dark-400'}`}>
+              <MessageCircle className="w-6 h-6" />
+              <span className="text-xs">Chat</span>
             </Link>
             <Link to={isAuthenticated ? '/profile' : '/auth'} className={`flex flex-col items-center gap-1 ${isActive('/profile') || isActive('/auth') ? 'text-primary-500' : 'text-dark-400'}`}>
               <User className="w-6 h-6" />

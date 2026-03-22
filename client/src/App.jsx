@@ -6,6 +6,8 @@ import CreatePostPage from './pages/CreatePostPage'
 import PostDetailPage from './pages/PostDetailPage'
 import ProfilePage from './pages/ProfilePage'
 import NotificationsPage from './pages/NotificationsPage'
+import ConversationsPage from './pages/ConversationsPage'
+import ChatPage from './pages/ChatPage'
 
 export default function App() {
   return (
@@ -18,6 +20,8 @@ export default function App() {
         <Route path="auth" element={<AuthPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="chat" element={<ConversationsPage />} />
+        <Route path="chat/:id" element={<ChatPage />} />
       </Route>
     </Routes>
   )
