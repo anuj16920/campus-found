@@ -12,6 +12,9 @@ import authRoutes from './routes/auth.routes.js';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy (required when behind Coolify/Nginx reverse proxy)
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 app.use(cors({
