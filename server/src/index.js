@@ -18,8 +18,8 @@ app.set('trust proxy', 1);
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: '*',
-  credentials: false
+  origin: ['https://lostandfound.weboplixx.com', 'http://lostandfound.weboplixx.com', /\.sslip\.io$/],
+  credentials: true
 }));
 
 // Rate limiting
@@ -57,7 +57,7 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 CampusFind server running on port ${PORT}`);
 });
 
