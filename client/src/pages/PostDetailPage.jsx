@@ -257,8 +257,8 @@ export default function PostDetailPage() {
             </button>
           </div>
 
-          {/* Claim button */}
-          {!isOwner && post.status === 'active' && (
+          {/* Claim button - show for everyone except the owner */}
+          {!isOwner && (
             <button
               onClick={handleClaim}
               className="btn-primary w-full py-4 text-lg"

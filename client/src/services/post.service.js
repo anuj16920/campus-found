@@ -57,10 +57,7 @@ export const postService = {
 
   // Create claim
   createClaim: async (postId, message) => {
-    const response = await api.post(`/posts/${postId}/claim`, { 
-      post_id: postId,
-      message 
-    })
+    const response = await api.post(`/claims/${postId}`, { message })
     return response.data
   },
 
