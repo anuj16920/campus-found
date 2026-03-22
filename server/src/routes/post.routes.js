@@ -19,8 +19,7 @@ router.get('/', async (req, res) => {
 
     let query = supabaseAdmin
       .from('posts')
-      .select('*', { count: 'exact' })
-      .eq('status', 'active');
+      .select('*', { count: 'exact' });
 
     // Apply filters
     if (category) {
