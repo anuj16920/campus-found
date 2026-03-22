@@ -5,7 +5,9 @@ import { authenticate } from '../middleware/auth.middleware.js';
 const router = Router();
 
 const createNotification = async (userId, type, message, data = {}) => {
-  await supabaseAdmin.from('notifications').insert({ user_id: userId, type, message, data });
+  console.log('Creating notification:', { userId, type, message });
+  const { error } = await supabaseAdmin.from('notifications').insert({ user_id: userId, type, message, data });
+  if (error) console.error('Notification insert error:', error);
 };
 
 // POST /api/claims/:postId - submit a claim

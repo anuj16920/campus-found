@@ -7,6 +7,7 @@ const router = Router();
 // GET /api/notifications - get my notifications
 router.get('/', authenticate, async (req, res) => {
   try {
+    console.log('Fetching notifications for user:', req.user.id);
     const { data, error } = await supabaseAdmin
       .from('notifications')
       .select('*')
@@ -14,10 +15,12 @@ router.get('/', authenticate, async (req, res) => {
       .order('created_at', { ascending: false })
       .limit(30);
 
+    console.log('Notifications result:', { data, error });
     if (error) return res.status(500).json({ error: error.message });
-    res.json({ notifications: data });
+    res.json({ notifications: data || [] });
   } catch (err) {
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Notifications error:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 
