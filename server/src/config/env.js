@@ -13,6 +13,9 @@ export const config = {
   SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || '',
   SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY || '',
 
+  // Auth
+  JWT_SECRET: process.env.JWT_SECRET || 'changeme-use-a-real-secret',
+
   // Upload
   MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
   ALLOWED_FILE_TYPES: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],

@@ -1,21 +1,25 @@
-// Auth service - uses localStorage for demo/simple auth (no Supabase auth)
+import { api } from './api.service';
 
+const TOKEN_KEY = 'campusfind_token';
 const USER_KEY = 'campusfind_user';
 
 export const authService = {
   register: async (email, password, name) => {
-    const user = { id: Date.now().toString(), email, name: name || email.split('@')[0] };
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-    return user;
+    const { data } = await api.post('/auth/register', { email, password, name });
+    localStorage.setItem(TOKEN_KEY, data.token);
+    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+    return data.user;
   },
 
   login: async (email, password) => {
-    const user = { id: Date.now().toString(), email, name: email.split('@')[0] };
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-    return user;
+    const { data } = await api.post('/auth/login', { email, password });
+    localStorage.setItem(TOKEN_KEY, data.token);
+    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+    return data.user;
   },
 
-  logout: async () => {
+  logout: () => {
+    localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
   },
 
@@ -23,6 +27,8 @@ export const authService = {
     const raw = localStorage.getItem(USER_KEY);
     return raw ? JSON.parse(raw) : null;
   },
+
+  getToken: () => localStorage.getItem(TOKEN_KEY),
 };
 
 export default authService;

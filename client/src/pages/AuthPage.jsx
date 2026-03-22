@@ -1,51 +1,26 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../stores/auth.store';
 
 export default function AuthPage() {
   const navigate = useNavigate();
+  const { login, register, isLoading, error, clearError } = useAuthStore();
   const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    name: ''
-  });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({ email: '', password: '', name: '' });
 
-  // Simple demo mode - just allow access without real auth
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    // Simple validation
-    if (!formData.email || !formData.password) {
-      setError('Please fill in all fields');
-      setLoading(false);
-      return;
+    clearError();
+    try {
+      if (isLogin) {
+        await login(formData.email, formData.password);
+      } else {
+        await register(formData.email, formData.password, formData.name);
+      }
+      navigate('/');
+    } catch {
+      // error is set in store
     }
-
-    if (!formData.email.includes('@')) {
-      setError('Please enter a valid email');
-      setLoading(false);
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
-      setLoading(false);
-      return;
-    }
-
-    // For demo - just allow access
-    // In production, you would integrate with your auth system
-    localStorage.setItem('campusfind_user', JSON.stringify({
-      email: formData.email,
-      name: formData.name || formData.email.split('@')[0]
-    }));
-
-    setLoading(false);
-    navigate('/');
   };
 
   return (
@@ -53,9 +28,7 @@ export default function AuthPage() {
       <div className="card p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">CampusFind</h1>
-          <p className="text-dark-400">
-            {isLogin ? 'Welcome back!' : 'Create an account'}
-          </p>
+          <p className="text-dark-400">{isLogin ? 'Welcome back!' : 'Create an account'}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -80,6 +53,7 @@ export default function AuthPage() {
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="input w-full"
               placeholder="you@example.com"
+              required
             />
           </div>
 
@@ -91,39 +65,27 @@ export default function AuthPage() {
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               className="input w-full"
               placeholder="••••••••"
+              required
+              minLength={6}
             />
           </div>
 
-          {error && (
-            <p className="text-red-500 text-sm">{error}</p>
-          )}
+          {error && <p className="text-red-500 text-sm">{error}</p>}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary w-full py-3"
-          >
-            {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Sign Up')}
+          <button type="submit" disabled={isLoading} className="btn-primary w-full py-3">
+            {isLoading ? 'Please wait...' : isLogin ? 'Sign In' : 'Sign Up'}
           </button>
         </form>
 
         <p className="text-center text-dark-400 mt-6">
           {isLogin ? "Don't have an account? " : 'Already have an account? '}
           <button
-            onClick={() => setIsLogin(!isLogin)}
+            onClick={() => { setIsLogin(!isLogin); clearError(); }}
             className="text-primary-500 hover:text-primary-400"
           >
             {isLogin ? 'Sign Up' : 'Sign In'}
           </button>
         </p>
-
-        <div className="mt-6 p-4 bg-dark-800 rounded-lg">
-          <p className="text-dark-400 text-sm text-center">
-            Demo mode: Enter any email and password (6+ chars) to continue.
-            <br />
-            Authentication will be added later.
-          </p>
-        </div>
       </div>
     </div>
   );

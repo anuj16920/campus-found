@@ -7,6 +7,7 @@ import 'dotenv/config';
 // Import routes
 import postRoutes from './routes/post.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
+import authRoutes from './routes/auth.routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -38,6 +39,7 @@ app.get('/api/health', (req, res) => {
 // Routes - no auth required
 app.use('/api/posts', postRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/auth', authRoutes);
 
 // Error handling
 app.use((err, req, res, next) => {
