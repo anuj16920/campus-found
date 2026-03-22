@@ -4,14 +4,92 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
   Heart, Bookmark, MapPin, Calendar, ArrowLeft, User,
-  MessageCircle, AlertTriangle, Check, Loader2
+  MessageCircle, AlertTriangle, Check, Loader2, X, Clock
 } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 import { postService } from '../services/post.service'
+import { api } from '../services/api.service'
 import { useAuthStore } from '../stores/auth.store'
 import { usePostStore } from '../stores/post.store'
 import toast from 'react-hot-toast'
 import EmptyState from '../components/EmptyState'
+
+function ClaimsSection({ postId }) {
+  const queryClient = useQueryClient()
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['claims', postId],
+    queryFn: () => api.get(`/claims/post/${postId}`).then(r => r.data),
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ claimId, status }) => api.put(`/claims/${claimId}`, { status }),
+    onSuccess: () => {
+      toast.success('Claim updated')
+      queryClient.invalidateQueries(['claims', postId])
+    },
+    onError: () => toast.error('Failed to update claim'),
+  })
+
+  const claims = data?.claims || []
+
+  return (
+    <div className="p-4 bg-dark-800 rounded-xl">
+      <p className="font-medium text-white mb-3 flex items-center gap-2">
+        <MessageCircle className="w-4 h-4" />
+        Claims ({claims.length})
+      </p>
+
+      {isLoading ? (
+        <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-primary-500" /></div>
+      ) : claims.length === 0 ? (
+        <p className="text-dark-400 text-sm">No claims yet</p>
+      ) : (
+        <div className="space-y-3">
+          {claims.map(claim => (
+            <div key={claim.id} className="bg-dark-700 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-7 h-7 rounded-full bg-primary-500 flex items-center justify-center text-white text-xs font-bold">
+                  {(claim.user?.name || 'U')[0].toUpperCase()}
+                </div>
+                <div>
+                  <p className="text-white text-sm font-medium">{claim.user?.name || 'Anonymous'}</p>
+                  <p className="text-dark-400 text-xs">{formatDistanceToNow(new Date(claim.created_at), { addSuffix: true })}</p>
+                </div>
+                <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
+                  claim.status === 'approved' ? 'bg-green-500/20 text-green-400' :
+                  claim.status === 'rejected' ? 'bg-red-500/20 text-red-400' :
+                  'bg-yellow-500/20 text-yellow-400'
+                }`}>
+                  {claim.status}
+                </span>
+              </div>
+              <p className="text-dark-300 text-sm mb-3">{claim.message}</p>
+              {claim.status === 'pending' && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => updateMutation.mutate({ claimId: claim.id, status: 'approved' })}
+                    disabled={updateMutation.isPending}
+                    className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 text-sm"
+                  >
+                    <Check className="w-4 h-4" /> Approve
+                  </button>
+                  <button
+                    onClick={() => updateMutation.mutate({ claimId: claim.id, status: 'rejected' })}
+                    disabled={updateMutation.isPending}
+                    className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm"
+                  >
+                    <X className="w-4 h-4" /> Reject
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 const categoryLabels = {
   electronics: 'Electronics',
@@ -270,16 +348,7 @@ export default function PostDetailPage() {
 
           {/* Owner actions */}
           {isOwner && (
-            <div className="p-4 bg-dark-800 rounded-xl">
-              <p className="text-dark-400 text-sm mb-3">You posted this item</p>
-              <Link
-                to={`/post/${id}/claims`}
-                className="btn-secondary w-full"
-              >
-                <MessageCircle className="w-5 h-5" />
-                View Claims ({post.claims_count || 0})
-              </Link>
-            </div>
+            <ClaimsSection postId={id} />
           )}
         </motion.div>
       </div>
