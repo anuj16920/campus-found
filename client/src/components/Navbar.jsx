@@ -123,6 +123,17 @@ export default function Navbar() {
               <Plus className="w-6 h-6" />
               <span className="text-xs">Post</span>
             </Link>
+            <Link to="/notifications" className={`flex flex-col items-center gap-1 relative ${isActive('/notifications') ? 'text-primary-500' : 'text-dark-400'}`}>
+              <div className="relative">
+                <Bell className="w-6 h-6" />
+                {unread > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
+                    {unread > 9 ? '9+' : unread}
+                  </span>
+                )}
+              </div>
+              <span className="text-xs">Alerts</span>
+            </Link>
             <Link to={isAuthenticated ? '/profile' : '/auth'} className={`flex flex-col items-center gap-1 ${isActive('/profile') || isActive('/auth') ? 'text-primary-500' : 'text-dark-400'}`}>
               <User className="w-6 h-6" />
               <span className="text-xs">{isAuthenticated ? 'Profile' : 'Login'}</span>
