@@ -4,10 +4,10 @@ import { useEffect } from 'react'
 import { useAuthStore } from '../stores/auth.store'
 
 export default function Layout() {
-  const { verifyAuth } = useAuthStore()
+  const { initialize } = useAuthStore()
 
   useEffect(() => {
-    verifyAuth()
+    initialize()
   }, [])
 
   return (

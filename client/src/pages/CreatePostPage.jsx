@@ -1,307 +1,271 @@
-import { useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Upload, X, MapPin, Calendar, Image as ImageIcon } from 'lucide-react'
-import { postService, uploadService } from '../services/post.service'
-import { useAuthStore } from '../stores/auth.store'
-import toast from 'react-hot-toast'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Upload, X, MapPin, Calendar, Tag, FileText, User, Mail } from 'lucide-react';
+import { api } from '../services/api.service';
 
-const categories = [
-  { value: 'electronics', label: 'Electronics' },
-  { value: 'documents', label: 'Documents' },
-  { value: 'bags', label: 'Bags & Luggage' },
-  { value: 'jewelry', label: 'Jewelry' },
-  { value: 'clothing', label: 'Clothing' },
-  { value: 'keys', label: 'Keys' },
-  { value: 'phones', label: 'Phones' },
-  { value: 'wallets', label: 'Wallets' },
-  { value: 'other', label: 'Other' },
-]
+const CATEGORIES = [
+  'ID Card',
+  'Phone',
+  'Laptop',
+  'Bag',
+  'Wallet',
+  'Keys',
+  'Book',
+  'Clothing',
+  'Other'
+];
 
 export default function CreatePostPage() {
-  const navigate = useNavigate()
-  const { user } = useAuthStore()
-  const fileInputRef = useRef(null)
-  const [isUploading, setIsUploading] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [preview, setPreview] = useState(null)
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [imagePreview, setImagePreview] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     category: '',
     location: '',
-    date_found: new Date().toISOString().split('T')[0],
+    date_found: '',
     type: 'found',
-    contact_method: 'in-app',
-  })
+    contact_method: 'email',
+    poster_name: '',
+    poster_email: ''
+  });
 
-  const handleFileSelect = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    // Validate file
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file')
-      return
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image must be less than 5MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('File size must be less than 5MB')
-      return
-    }
-
-    // Create preview
-    const reader = new FileReader()
-    reader.onload = (e) => setPreview(e.target.result)
-    reader.readAsDataURL(file)
-
-    // Upload image
-    setIsUploading(true)
-    try {
-      const { public_url } = await uploadService.uploadImage(file)
-      setFormData((prev) => ({ ...prev, image_url: public_url }))
-      toast.success('Image uploaded!')
-    } catch (error) {
-      console.error('Upload error:', error)
-      toast.error('Failed to upload image. Please try again.')
-      // Keep preview since FileReader data URL is still valid
-    } finally {
-      setIsUploading(false)
-    }
-  }
-
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    
-    if (!formData.title.trim()) {
-      toast.error('Please enter a title')
-      return
-    }
-    
-    if (!formData.category) {
-      toast.error('Please select a category')
-      return
-    }
-    
-    if (!formData.location.trim()) {
-      toast.error('Please enter a location')
-      return
-    }
+    e.preventDefault();
+    setError('');
+    setLoading(true);
 
-    setIsSubmitting(true)
     try {
-      const post = await postService.createPost({
+      let imageUrl = null;
+
+      // Upload image if selected
+      if (imagePreview) {
+        const base64Data = imagePreview.split(',')[1];
+        const contentType = imagePreview.split(';')[0].split(':')[1];
+        
+        const uploadRes = await api.post('/upload/image', {
+          image: base64Data,
+          filename: `post-${Date.now()}.jpg`,
+          contentType
+        });
+        
+        imageUrl = uploadRes.data.public_url;
+      }
+
+      // Create post
+      const postData = {
         ...formData,
-        user_id: user.id,
-      })
-      toast.success('Post created successfully!')
-      navigate(`/post/${post.id}`)
-    } catch (error) {
-      console.error('Create post error:', error)
-      toast.error(error.response?.data?.error || 'Failed to create post')
+        image_url: imageUrl
+      };
+
+      await api.post('/posts', postData);
+      navigate('/');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to create post');
     } finally {
-      setIsSubmitting(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <h1 className="text-2xl font-bold text-white mb-2">Report an Item</h1>
-        <p className="text-dark-400 mb-8">
-          Help reunite lost items with their owners by posting details here.
-        </p>
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold text-white mb-6">Post a Found Item</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Image Upload */}
-          <div>
-            <label className="label">Item Photo</label>
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className={`relative aspect-video bg-dark-800 border-2 border-dashed border-dark-600 rounded-2xl overflow-hidden cursor-pointer transition-colors hover:border-primary-500 ${
-                preview ? '' : 'flex items-center justify-center'
-              }`}
-            >
-              {preview ? (
-                <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-              ) : (
-                <div className="text-center">
-                  {isUploading ? (
-                    <div className="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                  ) : (
-                    <Upload className="w-10 h-10 text-dark-400 mx-auto mb-3" />
-                  )}
-                  <p className="text-dark-400">Click to upload an image</p>
-                  <p className="text-dark-500 text-sm mt-1">PNG, JPG up to 5MB</p>
-                </div>
-              )}
-              {preview && !isUploading && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setPreview(null)
-                    setFormData((prev) => ({ ...prev, image_url: null }))
-                  }}
-                  className="absolute top-3 right-3 p-2 bg-dark-900/80 rounded-full text-white hover:bg-dark-900"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              )}
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-          </div>
-
-          {/* Type Selection */}
-          <div>
-            <label className="label">Type</label>
-            <div className="grid grid-cols-2 gap-3">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Image Upload */}
+        <div>
+          <label className="block text-sm text-dark-300 mb-2">Item Image</label>
+          {imagePreview ? (
+            <div className="relative">
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="w-full h-64 object-cover rounded-lg"
+              />
               <button
                 type="button"
-                onClick={() => setFormData((prev) => ({ ...prev, type: 'found' }))}
-                className={`p-4 rounded-xl border-2 transition-colors ${
-                  formData.type === 'found'
-                    ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400'
-                    : 'border-dark-600 text-dark-300 hover:border-dark-500'
-                }`}
+                onClick={() => setImagePreview(null)}
+                className="absolute top-2 right-2 p-1 bg-dark-900/80 rounded-full"
               >
-                <div className="text-2xl mb-1">✨</div>
-                <div className="font-medium">I Found This</div>
-                <div className="text-sm opacity-70">Found an item</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormData((prev) => ({ ...prev, type: 'lost' }))}
-                className={`p-4 rounded-xl border-2 transition-colors ${
-                  formData.type === 'lost'
-                    ? 'border-amber-500 bg-amber-500/10 text-amber-400'
-                    : 'border-dark-600 text-dark-300 hover:border-dark-500'
-                }`}
-              >
-                <div className="text-2xl mb-1">🔍</div>
-                <div className="font-medium">I Lost This</div>
-                <div className="text-sm opacity-70">Looking for item</div>
+                <X className="w-5 h-5 text-white" />
               </button>
             </div>
-          </div>
+          ) : (
+            <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-dark-600 rounded-lg cursor-pointer hover:border-primary-500 transition-colors">
+              <Upload className="w-10 h-10 text-dark-400 mb-2" />
+              <span className="text-dark-400">Click to upload image</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+            </label>
+          )}
+        </div>
 
-          {/* Title */}
+        {/* Title */}
+        <div>
+          <label className="block text-sm text-dark-300 mb-1">
+            <Tag className="w-4 h-4 inline mr-1" />
+            Item Title *
+          </label>
+          <input
+            type="text"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            className="input w-full"
+            placeholder="e.g., Blue iPhone 14"
+            required
+          />
+        </div>
+
+        {/* Description */}
+        <div>
+          <label className="block text-sm text-dark-300 mb-1">
+            <FileText className="w-4 h-4 inline mr-1" />
+            Description
+          </label>
+          <textarea
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            className="input w-full h-24 resize-none"
+            placeholder="Describe the item..."
+          />
+        </div>
+
+        {/* Category */}
+        <div>
+          <label className="block text-sm text-dark-300 mb-1">Category *</label>
+          <select
+            value={formData.category}
+            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            className="input w-full"
+            required
+          >
+            <option value="">Select category</option>
+            {CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Location */}
+        <div>
+          <label className="block text-sm text-dark-300 mb-1">
+            <MapPin className="w-4 h-4 inline mr-1" />
+            Location Found *
+          </label>
+          <input
+            type="text"
+            value={formData.location}
+            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+            className="input w-full"
+            placeholder="e.g., Library, Room 201"
+            required
+          />
+        </div>
+
+        {/* Date Found */}
+        <div>
+          <label className="block text-sm text-dark-300 mb-1">
+            <Calendar className="w-4 h-4 inline mr-1" />
+            Date Found
+          </label>
+          <input
+            type="date"
+            value={formData.date_found}
+            onChange={(e) => setFormData({ ...formData, date_found: e.target.value })}
+            className="input w-full"
+          />
+        </div>
+
+        {/* Type */}
+        <div>
+          <label className="block text-sm text-dark-300 mb-1">Type</label>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="type"
+                value="found"
+                checked={formData.type === 'found'}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+              />
+              <span className="text-white">Found</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="type"
+                value="lost"
+                checked={formData.type === 'lost'}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+              />
+              <span className="text-white">Lost</span>
+            </label>
+          </div>
+        </div>
+
+        {/* Contact Info */}
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="label">Title</label>
+            <label className="block text-sm text-dark-300 mb-1">
+              <User className="w-4 h-4 inline mr-1" />
+              Your Name
+            </label>
             <input
               type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              placeholder="e.g., Black iPhone 14 Pro"
-              className="input"
-              maxLength={255}
-              required
+              value={formData.poster_name}
+              onChange={(e) => setFormData({ ...formData, poster_name: e.target.value })}
+              className="input w-full"
+              placeholder="Your name"
             />
           </div>
-
-          {/* Category */}
           <div>
-            <label className="label">Category</label>
-            <select
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              className="input"
-              required
-            >
-              <option value="">Select a category</option>
-              {categories.map((cat) => (
-                <option key={cat.value} value={cat.value}>
-                  {cat.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="label">Description (optional)</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Any distinguishing features, brand, color, etc."
-              className="input min-h-[100px] resize-y"
-              maxLength={2000}
+            <label className="block text-sm text-dark-300 mb-1">
+              <Mail className="w-4 h-4 inline mr-1" />
+              Your Email
+            </label>
+            <input
+              type="email"
+              value={formData.poster_email}
+              onChange={(e) => setFormData({ ...formData, poster_email: e.target.value })}
+              className="input w-full"
+              placeholder="your@email.com"
             />
           </div>
+        </div>
 
-          {/* Location */}
-          <div>
-            <label className="label">Location</label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" />
-              <input
-                type="text"
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-                placeholder="e.g., Library, Building A, Cafeteria"
-                className="input pl-10"
-                required
-              />
-            </div>
-          </div>
+        {error && (
+          <p className="text-red-500 text-sm">{error}</p>
+        )}
 
-          {/* Date */}
-          <div>
-            <label className="label">Date</label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" />
-              <input
-                type="date"
-                name="date_found"
-                value={formData.date_found}
-                onChange={handleChange}
-                className="input pl-10"
-                max={new Date().toISOString().split('T')[0]}
-              />
-            </div>
-          </div>
-
-          {/* Submit */}
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="btn-outline flex-1"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting || isUploading || !formData.image_url}
-              className="btn-primary flex-1"
-            >
-              {isSubmitting ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                'Post Item'
-              )}
-            </button>
-          </div>
-        </form>
-      </motion.div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="btn-primary w-full py-3"
+        >
+          {loading ? 'Posting...' : 'Post Item'}
+        </button>
+      </form>
     </div>
-  )
+  );
 }
