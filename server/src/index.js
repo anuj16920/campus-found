@@ -18,7 +18,13 @@ app.set('trust proxy', 1);
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: ['https://lostandfound.weboplixx.com', 'http://lostandfound.weboplixx.com', /\.sslip\.io$/],
+  origin: (origin, callback) => {
+    if (!origin || origin.includes('vercel.app') || origin.includes('weboplixx.com') || origin.includes('sslip.io')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 
