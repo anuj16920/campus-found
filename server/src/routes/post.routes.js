@@ -111,14 +111,13 @@ router.post('/', async (req, res) => {
         contact_method: contact_method || 'email',
         poster_name: poster_name || 'Anonymous',
         poster_email: poster_email,
-        status: 'active'
       })
       .select()
       .single();
 
     if (error) {
       console.error('Create post error:', error);
-      return res.status(500).json({ error: 'Failed to create post' });
+      return res.status(500).json({ error: 'Failed to create post: ' + error.message });
     }
 
     res.status(201).json(post);
