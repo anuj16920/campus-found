@@ -24,6 +24,7 @@ router.post('/:postId', authenticate, async (req, res) => {
       .from('posts').select('id, user_id, title').eq('id', postId).maybeSingle();
 
     if (!post) return res.status(404).json({ error: 'Post not found' });
+    if (!post.user_id) return res.status(400).json({ error: 'This post has no owner to notify' });
     if (post.user_id === userId) return res.status(400).json({ error: 'Cannot claim your own post' });
 
     const { data: existing } = await supabaseAdmin

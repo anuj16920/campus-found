@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { supabaseAdmin } from '../config/supabase.js';
+import { optionalAuth } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
@@ -90,7 +91,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create post
-router.post('/', async (req, res) => {
+router.post('/', optionalAuth, async (req, res) => {
   try {
     const { title, description, image_url, category, location, date_found, type, contact_method, poster_name, poster_email } = req.body;
 
@@ -111,6 +112,7 @@ router.post('/', async (req, res) => {
         contact_method: contact_method || 'email',
         poster_name: poster_name || 'Anonymous',
         poster_email: poster_email,
+        user_id: req.user?.id || null,
       })
       .select()
       .single();
