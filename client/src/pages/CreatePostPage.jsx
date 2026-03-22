@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, X, MapPin, Calendar, Tag, FileText, User, Mail } from 'lucide-react';
 import { api } from '../services/api.service';
+import { useAuthStore } from '../stores/auth.store';
 
 const CATEGORIES = [
   'ID Card',
@@ -17,6 +18,7 @@ const CATEGORIES = [
 
 export default function CreatePostPage() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [imagePreview, setImagePreview] = useState(null);
@@ -28,8 +30,8 @@ export default function CreatePostPage() {
     date_found: '',
     type: 'found',
     contact_method: 'email',
-    poster_name: '',
-    poster_email: ''
+    poster_name: user?.name || '',
+    poster_email: user?.email || ''
   });
 
   const handleImageChange = (e) => {

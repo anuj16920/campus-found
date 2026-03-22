@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage'
 import AuthPage from './pages/AuthPage'
 import CreatePostPage from './pages/CreatePostPage'
 import PostDetailPage from './pages/PostDetailPage'
+import ProfilePage from './pages/ProfilePage'
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="post/:id" element={<PostDetailPage />} />
         <Route path="create" element={<CreatePostPage />} />
         <Route path="auth" element={<AuthPage />} />
+        <Route path="profile" element={<ProfilePage />} />
       </Route>
     </Routes>
   )

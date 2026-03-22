@@ -13,7 +13,8 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-dark-900">
       <Navbar />
-      <main className="pt-16">
+      {/* pt-14 for top header, pb-16 for bottom nav */}
+      <main className="pt-14 pb-16">
         <Outlet />
       </main>
     </div>
