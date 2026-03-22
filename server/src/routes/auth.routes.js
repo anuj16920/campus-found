@@ -15,9 +15,9 @@ router.post('/register', async (req, res) => {
     const { email, password, name } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
 
-    // Check existing
+    // Check existing - use maybeSingle() so it returns null instead of error when not found
     const { data: existing } = await supabaseAdmin
-      .from('users').select('id').eq('email', email).single();
+      .from('users').select('id').eq('email', email).maybeSingle();
     if (existing) return res.status(409).json({ error: 'Email already registered' });
 
     const password_hash = await bcrypt.hash(password, 10);
@@ -30,13 +30,13 @@ router.post('/register', async (req, res) => {
 
     if (error) {
       console.error('Register error:', error);
-      return res.status(500).json({ error: 'Failed to create user' });
+      return res.status(500).json({ error: 'Failed to create user: ' + error.message });
     }
 
     res.status(201).json({ token: signToken(user), user });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Register exception:', err);
+    res.status(500).json({ error: 'Internal server error: ' + err.message });
   }
 });
 
@@ -47,7 +47,7 @@ router.post('/login', async (req, res) => {
     if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
 
     const { data: user, error } = await supabaseAdmin
-      .from('users').select('*').eq('email', email).single();
+      .from('users').select('*').eq('email', email).maybeSingle();
 
     if (error || !user) return res.status(401).json({ error: 'Invalid credentials' });
 
@@ -57,8 +57,8 @@ router.post('/login', async (req, res) => {
     const { password_hash, ...safeUser } = user;
     res.json({ token: signToken(safeUser), user: safeUser });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Login exception:', err);
+    res.status(500).json({ error: 'Internal server error: ' + err.message });
   }
 });
 
