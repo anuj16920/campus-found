@@ -24,6 +24,17 @@ router.post('/:postId', authenticate, async (req, res) => {
       .from('posts').select('id, user_id, title').eq('id', postId).maybeSingle();
 
     if (!post) return res.status(404).json({ error: 'Post not found' });
+
+    // Auto-fix: if post has no user_id, try to find owner by poster_email
+    if (!post.user_id && post.poster_email) {
+      const { data: owner } = await supabaseAdmin
+        .from('users').select('id').ilike('email', post.poster_email).maybeSingle();
+      if (owner) {
+        await supabaseAdmin.from('posts').update({ user_id: owner.id }).eq('id', postId);
+        post.user_id = owner.id;
+      }
+    }
+
     if (!post.user_id) return res.status(400).json({ error: 'This post has no owner to notify' });
     if (post.user_id === userId) return res.status(400).json({ error: 'Cannot claim your own post' });
 

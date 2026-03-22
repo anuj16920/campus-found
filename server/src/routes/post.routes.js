@@ -68,8 +68,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get single post
-router.get('/:id', async (req, res) => {
+// Get single post — auto-assign user_id if viewer is the poster (email match)
+router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -83,9 +83,37 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Post not found' });
     }
 
+    // Auto-fix: if post has no user_id but logged-in user's email matches poster_email, claim it
+    if (!post.user_id && req.user?.id && req.user?.email && post.poster_email) {
+      if (req.user.email.toLowerCase() === post.poster_email.toLowerCase()) {
+        await supabaseAdmin.from('posts').update({ user_id: req.user.id }).eq('id', id);
+        post.user_id = req.user.id;
+      }
+    }
+
     res.json(post);
   } catch (error) {
     console.error('Post fetch error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Fix ownership — assigns user_id to all posts where poster_email matches logged-in user
+router.post('/fix-ownership', optionalAuth, async (req, res) => {
+  try {
+    if (!req.user?.id || !req.user?.email) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    const { data, error } = await supabaseAdmin
+      .from('posts')
+      .update({ user_id: req.user.id })
+      .is('user_id', null)
+      .ilike('poster_email', req.user.email)
+      .select('id');
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ fixed: data?.length || 0 });
+  } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
