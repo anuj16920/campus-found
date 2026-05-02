@@ -202,6 +202,4 @@ See `supabase/schema.sql` for complete schema with RLS policies.
 - Helmet.js security headers
 - CORS protection
 
-## License
 
-MIT
